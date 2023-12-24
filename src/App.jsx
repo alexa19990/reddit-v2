@@ -12,8 +12,47 @@ const App = () => {
     Array(dataState.comments.length).fill(false)
   ); //Array() funqcia argumentis toli sigrdzis masivs sheqmnis da mis titoeul elements gadaaqcevs bulean value falsad
 
+  const [replyToggleSecond, setReplyToggleSecond] = useState(
+    Array(dataState.comments[1].replies.length).fill(false)
+  );
 
 
+  console.log(dataState.comments)
+
+
+  const replyHandlerSecond = (index) => {
+    setReplyToggleSecond((prev) => {
+      const updated = [...prev];
+      updated[index] = !updated[index];
+      return updated;
+    });
+  };
+
+  const handleDelete = (commentIndex, replyIndex) => {
+    setDataState((prevDataState) => {
+      const updatedComments = [...prevDataState.comments];
+  
+      if (replyIndex !== undefined) {
+        const updatedReplies = [...updatedComments[commentIndex].replies];
+        updatedReplies.splice(replyIndex, 1);
+        updatedComments[commentIndex] = {
+          ...updatedComments[commentIndex],
+          replies: updatedReplies,
+        };
+      } else {
+        updatedComments.splice(commentIndex, 1);
+      }
+  
+      return {
+        ...prevDataState,
+        comments: updatedComments,
+      };
+    });
+  };
+  
+  
+  
+  
 
   const replyHandler = (index) => {
     setReplyToggle((prevState) => {
@@ -23,7 +62,7 @@ const App = () => {
     });
   };
 
-  const addReply = (index) => {
+  const addReply = (index, action) => {
     if (inputValue.trim() !== "") {
       const updatedComments = [...dataState.comments];
       const updatedReplies = [...updatedComments[index].replies];
@@ -40,6 +79,7 @@ const App = () => {
           username: "julisomo",
         },
         isCurrentUser: true,
+        replyingTo: action ? updatedReplies[index-1].user.username : updatedComments[index].user.username
       });
 
       updatedComments[index] = {
@@ -51,8 +91,8 @@ const App = () => {
         ...dataState,
         comments: updatedComments,
       });
-      replyHandler(index);
-      setInputValue("");
+      !action ? replyHandler(index) : replyHandlerSecond(0)
+
     } else {
       window.alert("Please Fill Input Field");
     }
@@ -88,15 +128,19 @@ const App = () => {
     <React.Fragment key={index}>
       <Comment
         item={item}
+        itemIndex={index}
         data={dataState}
         replyHandler={() => replyHandler(index)}
-        type={true}
+        type={false}
+        handleDelete={handleDelete}
+        setDataState={setDataState}
       />
       {replyToggle[index] && (
         <Reply
           buttonTxt={"reply"}
           setInputValue={setInputValue}
           addReply={addReply}
+          action={false}
           index={index}
         />
       )}
@@ -108,12 +152,22 @@ const App = () => {
                 item={reply}
                 itemIndex={index}
                 key={replyIndex}
+                setDataState={setDataState}
                 replyIndex={replyIndex}
                 data={dataState}
                 type={true}
-                
+                replyHandler={()=>replyHandlerSecond(replyIndex)}
+                handleDelete={handleDelete}
               />
-              
+              {replyToggleSecond[replyIndex] && reply.guestReply ? (
+                <Reply
+                  buttonTxt={'reply'}
+                  setInputValue={setInputValue}
+                  addReply={addReply}
+                  action={true}
+                  index={index}
+                />
+              ):''}
             </>
           ))}
         </div>
